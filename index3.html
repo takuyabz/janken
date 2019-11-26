@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>JSゲーム テトリス</title>
+</head>
+
+<body>
+
+  <script>
+    const FIELD_WIDTH = 12;
+    const FIELD_HEIGHT = 22;
+
+    var minoTypes = {
+      MINO_TYPE_I: 0,
+      MINO_TYPE_O: 1,
+      MINO_TYPE_S: 2,
+      MINO_TYPE_Z: 3,
+      MINO_TYPE_J: 4,
+      MINO_TYPE_L: 5,
+      MINO_TYPE_T: 6,
+      MINO_TYPE_MAX: 7
+    };
+
+    var angleTypes = {
+      ANGLE_0: 0,
+      ANGLE_90: 1,
+      ANGLE_180: 2,
+      ANGLE_270: 3,
+      ANGLE_MAX: 4
+    };
+
+    const MINO_WIDTH = 4;
+    const MINO_HEIGHT = 4;
+
+    var minoShapes = [
+      // [MINO_TYPE_MAX,ANGLE_MAX,MINO_WIDTH,MINO_HEIGHT]
+      // MINO_TYPE_I
+      [
+        // ANGLE_0
+        [
+          [0, 1, 0, 0],
+          [0, 1, 0, 0],
+          [0, 1, 0, 0],
+          [0, 1, 0, 0],
+        ],
+        // ANGLE_90
+        [
+          [0, 0, 0, 0],
+          [0, 0, 0, 0],
+          [1, 1, 1, 1],
+          [0, 0, 0, 0],
+        ],
+        // ANGLE_180
+        [
+          [0, 0, 1, 0],
+          [0, 0, 1, 0],
+          [0, 0, 1, 0],
+          [0, 0, 1, 0],
+        ],
+        // ANGLE_270
+        [
+          [0, 0, 0, 0],
+          [1, 1, 1, 1],
+          [0, 0, 0, 0],
+          [0, 0, 0, 0],
+        ],
+      ],
+      // MINO_TYPE_O
+      [
+        [
+          [0, 0, 0, 0],
+          [0, 1, 1, 0],
+          [0, 1, 1, 0],
+          [0, 0, 0, 0],
+        ],
+        [
+          [0, 0, 0, 0],
+          [0, 1, 1, 0],
+          [0, 1, 1, 0],
+          [0, 0, 0, 0],
+        ],
+        [
+          [0, 0, 0, 0],
+          [0, 1, 1, 0],
+          [0, 1, 1, 0],
+          [0, 0, 0, 0],
+        ],
+        [
+          [0, 0, 0, 0],
+          [0, 1, 1, 0],
+          [0, 1, 1, 0],
+          [0, 0, 0, 0],
+        ],
+
+      ],
+      // MINO_TYPE_S
+      [
+        [
+          [0, 0, 0, 0],
+          [0, 1, 1, 0],
+          [1, 1, 0, 0],
+          [0, 0, 0, 0],
+        ],
+        [
+          [0, 1, 0, 0],
+          [0, 1, 1, 0],
+          [0, 0, 1, 0],
+          [0, 0, 0, 0],
+        ],
+        [
+          [0, 0, 0, 0],
+          [0, 1, 1, 0],
+          [1, 1, 0, 0],
+          [0, 0, 0, 0],
+        ],
+        [
+          [0, 1, 0, 0],
+          [0, 1, 1, 0],
+          [0, 0, 1, 0],
+          [0, 0, 0, 0],
+        ],
+      ],
+      // MINO_TYPE_Z
+      [
+        [
+          [0, 0, 0, 0],
+          [0, 1, 1, 0],
+          [0, 0, 1, 1],
+          [0, 0, 0, 0],
+        ],
+        [
+          [0, 0, 0, 0],
+          [0, 0, 1, 0],
+          [0, 1, 1, 0],
+          [0, 1, 0, 0],
+        ],
+        [
+          [0, 0, 0, 0],
+          [1, 1, 0, 0],
+          [0, 1, 1, 0],
+          [0, 0, 0, 0],
+        ],
+        [
+          [0, 0, 0, 0],
+          [0, 0, 1, 0],
+          [0, 1, 1, 0],
+          [0, 1, 0, 0],
+        ],
+      ],
+      // MINO_TYPE_J
+      [
+        [
+          [0, 0, 1, 0],
+          [0, 0, 1, 0],
+          [0, 1, 1, 0],
+          [0, 0, 0, 0],
+        ],
+        [
+          [0, 0, 0, 0],
+          [0, 1, 0, 0],
+          [0, 1, 1, 1],
+          [0, 0, 0, 0],
+        ],
+        [
+          [0, 0, 0, 0],
+          [0, 1, 1, 0],
+          [0, 1, 0, 0],
+          [0, 1, 0, 0],
+        ],
+        [
+          [0, 0, 0, 0],
+          [1, 1, 1, 0],
+          [0, 0, 1, 0],
+          [0, 0, 0, 0],
+        ],
+      ],
+      // MINO_TYPE_L
+      [
+        [
+          [0, 1, 0, 0],
+          [0, 1, 0, 0],
+          [0, 1, 1, 0],
+          [0, 0, 0, 0],
+        ],
+        [
+          [0, 0, 0, 0],
+          [0, 1, 1, 1],
+          [0, 1, 0, 0],
+          [0, 0, 0, 0],
+        ],
+        [
+          [0, 0, 0, 0],
+          [0, 1, 1, 0],
+          [0, 0, 1, 0],
+          [0, 0, 1, 0],
+        ],
+        [
+          [0, 0, 0, 0],
+          [0, 0, 1, 0],
+          [1, 1, 1, 0],
+          [0, 0, 0, 0],
+        ],
+      ],
+      // MINO_TYPE_T
+      [
+        [
+          [0, 0, 0, 0],
+          [0, 1, 0, 0],
+          [1, 1, 1, 0],
+          [0, 0, 0, 0],
+        ],
+        [
+          [0, 0, 0, 0],
+          [0, 1, 0, 0],
+          [0, 1, 1, 0],
+          [0, 1, 0, 0],
+        ],
+        [
+          [0, 0, 0, 0],
+          [0, 0, 0, 0],
+          [1, 1, 1, 0],
+          [0, 1, 0, 0],
+        ],
+        [
+          [0, 0, 0, 0],
+          [0, 1, 0, 0],
+          [1, 1, 0, 0],
+          [0, 1, 0, 0],
+        ],
+      ],
+    ];
+
+
+
+    var field;
+    function clearField() {
+      field = new Array(FIELD_HEIGHT);
+      for (i = 0; i < FIELD_HEIGHT; i++) {
+        field[i] = new Array(FIELD_WIDTH);
+        for (j = 0; j < FIELD_WIDTH; j++) {
+          field[i][j] = 0;
+        }
+      }
+    }
+    clearField();
+    for (i = 0; i < FIELD_HEIGHT; i++) {
+      field[i][0] = 1;
+      field[i][FIELD_WIDTH - 1] = 1;
+    }
+    for (j = 0; j < FIELD_WIDTH; j++) {
+      field[FIELD_HEIGHT - 1][j] = 1;
+    }
+
+    var displayBuffer;
+    function clearBuffer() {
+      displayBuffer = new Array(FIELD_HEIGHT);
+      for (i = 0; i < FIELD_HEIGHT; i++) {
+        displayBuffer[i] = new Array(FIELD_WIDTH);
+        for (j = 0; j < FIELD_WIDTH; j++) {
+          displayBuffer[i][j] = 0;
+        }
+      }
+    }
+    clearBuffer();
+
+    var div;
+
+    var minoX = 5, minoY = 0;
+    var minoType = 0; minoAngle = 0;
+    resetMino();
+
+    function isHit(_minoX, _minoY, _minoType, _minoAngle) {
+      for (i = 0; i < MINO_HEIGHT; i++) {
+        for (j = 0; j < MINO_WIDTH; j++) {
+          if (minoShapes[_minoType][_minoAngle][i][j]
+            && field[_minoY + i][_minoX + j])
+            return true;
+        }
+      }
+      return false;
+    }
+
+    function resetMino() {
+      minoX = 5;
+      minoY = 0;
+      minoType = Math.floor(Math.random() * (minoTypes.MINO_TYPE_MAX));
+      minoAngle = Math.floor(Math.random() * (angleTypes.ANGLE_MAX));
+    }
+
+    function display() {
+      if (div) document.body.removeChild(div);
+      div = document.createElement("div");
+
+      for (i = 0; i < FIELD_HEIGHT; i++) {
+        for (j = 0; j < FIELD_WIDTH; j++) {
+          displayBuffer[i][j] = field[i][j];
+        }
+      }
+
+      for (i = 0; i < MINO_HEIGHT; i++) {
+        for (j = 0; j < MINO_WIDTH; j++) {
+          displayBuffer[minoY + i][minoX + j] |=
+            minoShapes[minoType][minoAngle][i][j];
+        }
+      }
+      for (i = 0; i < FIELD_HEIGHT; i++) {
+        for (j = 0; j < FIELD_WIDTH; j++) {
+          var span = document.createElement("span");
+          span.innerText = displayBuffer[i][j] ? "■" : "　";
+          span.setAttribute("style", "padding:0.2em;border:1px solid #ccc");
+          div.appendChild(span);
+        }
+        var br = document.createElement("br");
+        div.appendChild(br);
+      }
+
+      document.body.appendChild(div);
+    }
+
+    setInterval(() => {
+      if (isHit(minoX, minoY + 1, minoType, minoAngle)) {
+        for (i = 0; i < MINO_HEIGHT; i++) {
+          for (j = 0; j < MINO_WIDTH; j++) {
+            field[minoY + i][minoX + j] |=
+              minoShapes[minoType][minoAngle][i][j];
+          }
+        }
+        resetMino();
+        for (i = 0; i < FIELD_HEIGHT - 1; i++) {
+          var lineFill = true;
+          for (j = 1; j < FIELD_WIDTH - 1; j++) {
+            if (!field[i][j]) {
+              lineFill = false;
+            }
+          }
+          if (lineFill) {
+            for (j = 1; j < FIELD_WIDTH - 1; j++) {
+              field[i][j] = 0;
+            }
+            for (j = i; 0 < j; j--) {
+              for (x = 0; x < FIELD_WIDTH; x++) {
+                field[j][x] = field[j - 1][x];
+              }
+            }
+          }
+        }
+      } else {
+        minoY++;
+      }
+      display();
+    }, 500);
+
+    document.onkeydown = function () {
+      switch (event.keyCode) {
+        // case 87://"w":
+        //   break;
+        case 83://"s":
+        case 40://"DOWN"
+          if (!isHit(minoX, minoY + 1, minoType, minoAngle)) {
+            minoY++;
+          }
+          break;
+        case 65://"a":
+        case 37://"LEFT"
+          if (!isHit(minoX - 1, minoY, minoType, minoAngle)) {
+            minoX--;
+          }
+          break;
+        case 68://"d"
+        case 39://"RIGHT"
+          if (!isHit(minoX + 1, minoY, minoType, minoAngle)) {
+            minoX++;
+          }
+          break;
+        case 32://"space"
+          if (!isHit(minoX, minoY, minoType, (minoAngle + 1) % angleTypes.ANGLE_MAX)) {
+            minoAngle = (minoAngle + 1) % angleTypes.ANGLE_MAX;
+          }
+          break;
+        default:
+          break;
+      }
+      display();
+      // console.log(event.keyCode);
+    };
+
+  </script>
+
+  <button onclick="document.querySelector('#info').setAttribute('style','display:block');">解説、ソースコード表示</button>
+  <button onclick="document.querySelector('#info').setAttribute('style','display:none');">解説、ソースコード非表示</button>
+  <div id="info" style="display:none;bottom:0;position:fixed;background-color:white;">
+    <h2>JavaScriptでテトリス</h2>
+    <p>←：A or 左矢印キー、↓：S or 下矢印キー、→：D or 右矢印キー、 回転：SPACEキー、初期化：ブラウザリフレッシュ</p>
+    <h3>ソースコード</h3>
+    <textarea style="width:100%" rows=3>
+        <!DOCTYPE html>
+        <html lang="en">
+        
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <meta http-equiv="X-UA-Compatible" content="ie=edge">
+          <title>JSゲーム テトリス</title>
+        </head>
+        
+        <body>
+        
+          <script>
+            const FIELD_WIDTH = 12;
+            const FIELD_HEIGHT = 22;
+
+            var minoTypes = {
+              MINO_TYPE_I: 0,
+              MINO_TYPE_O: 1,
+              MINO_TYPE_S: 2,
+              MINO_TYPE_Z: 3,
+              MINO_TYPE_J: 4,
+              MINO_TYPE_L: 5,
+              MINO_TYPE_T: 6,
+              MINO_TYPE_MAX: 7
+            };
+
+            var angleTypes = {
+              ANGLE_0: 0,
+              ANGLE_90: 1,
+              ANGLE_180: 2,
+              ANGLE_270: 3,
+              ANGLE_MAX: 4
+            };
+
+            const MINO_WIDTH = 4;
+            const MINO_HEIGHT = 4;
+
+            var minoShapes = [
+              // [MINO_TYPE_MAX,ANGLE_MAX,MINO_WIDTH,MINO_HEIGHT]
+              // MINO_TYPE_I
+              [
+                // ANGLE_0
+                [
+                  [0, 1, 0, 0],
+                  [0, 1, 0, 0],
+                  [0, 1, 0, 0],
+                  [0, 1, 0, 0],
+                ],
+                // ANGLE_90
+                [
+                  [0, 0, 0, 0],
+                  [0, 0, 0, 0],
+                  [1, 1, 1, 1],
+                  [0, 0, 0, 0],
+                ],
+                // ANGLE_180
+                [
+                  [0, 0, 1, 0],
+                  [0, 0, 1, 0],
+                  [0, 0, 1, 0],
+                  [0, 0, 1, 0],
+                ],
+                // ANGLE_270
+                [
+                  [0, 0, 0, 0],
+                  [1, 1, 1, 1],
+                  [0, 0, 0, 0],
+                  [0, 0, 0, 0],
+                ],
+              ],
+              // MINO_TYPE_O
+              [
+                [
+                  [0, 0, 0, 0],
+                  [0, 1, 1, 0],
+                  [0, 1, 1, 0],
+                  [0, 0, 0, 0],
+                ],
+                [
+                  [0, 0, 0, 0],
+                  [0, 1, 1, 0],
+                  [0, 1, 1, 0],
+                  [0, 0, 0, 0],
+                ],
+                [
+                  [0, 0, 0, 0],
+                  [0, 1, 1, 0],
+                  [0, 1, 1, 0],
+                  [0, 0, 0, 0],
+                ],
+                [
+                  [0, 0, 0, 0],
+                  [0, 1, 1, 0],
+                  [0, 1, 1, 0],
+                  [0, 0, 0, 0],
+                ],
+
+              ],
+              // MINO_TYPE_S
+              [
+                [
+                  [0, 0, 0, 0],
+                  [0, 1, 1, 0],
+                  [1, 1, 0, 0],
+                  [0, 0, 0, 0],
+                ],
+                [
+                  [0, 1, 0, 0],
+                  [0, 1, 1, 0],
+                  [0, 0, 1, 0],
+                  [0, 0, 0, 0],
+                ],
+                [
+                  [0, 0, 0, 0],
+                  [0, 1, 1, 0],
+                  [1, 1, 0, 0],
+                  [0, 0, 0, 0],
+                ],
+                [
+                  [0, 1, 0, 0],
+                  [0, 1, 1, 0],
+                  [0, 0, 1, 0],
+                  [0, 0, 0, 0],
+                ],
+              ],
+              // MINO_TYPE_Z
+              [
+                [
+                  [0, 0, 0, 0],
+                  [0, 1, 1, 0],
+                  [0, 0, 1, 1],
+                  [0, 0, 0, 0],
+                ],
+                [
+                  [0, 0, 0, 0],
+                  [0, 0, 1, 0],
+                  [0, 1, 1, 0],
+                  [0, 1, 0, 0],
+                ],
+                [
+                  [0, 0, 0, 0],
+                  [1, 1, 0, 0],
+                  [0, 1, 1, 0],
+                  [0, 0, 0, 0],
+                ],
+                [
+                  [0, 0, 0, 0],
+                  [0, 0, 1, 0],
+                  [0, 1, 1, 0],
+                  [0, 1, 0, 0],
+                ],
+              ],
+              // MINO_TYPE_J
+              [
+                [
+                  [0, 0, 1, 0],
+                  [0, 0, 1, 0],
+                  [0, 1, 1, 0],
+                  [0, 0, 0, 0],
+                ],
+                [
+                  [0, 0, 0, 0],
+                  [0, 1, 0, 0],
+                  [0, 1, 1, 1],
+                  [0, 0, 0, 0],
+                ],
+                [
+                  [0, 0, 0, 0],
+                  [0, 1, 1, 0],
+                  [0, 1, 0, 0],
+                  [0, 1, 0, 0],
+                ],
+                [
+                  [0, 0, 0, 0],
+                  [1, 1, 1, 0],
+                  [0, 0, 1, 0],
+                  [0, 0, 0, 0],
+                ],
+              ],
+              // MINO_TYPE_L
+              [
+                [
+                  [0, 1, 0, 0],
+                  [0, 1, 0, 0],
+                  [0, 1, 1, 0],
+                  [0, 0, 0, 0],
+                ],
+                [
+                  [0, 0, 0, 0],
+                  [0, 1, 1, 1],
+                  [0, 1, 0, 0],
+                  [0, 0, 0, 0],
+                ],
+                [
+                  [0, 0, 0, 0],
+                  [0, 1, 1, 0],
+                  [0, 0, 1, 0],
+                  [0, 0, 1, 0],
+                ],
+                [
+                  [0, 0, 0, 0],
+                  [0, 0, 1, 0],
+                  [1, 1, 1, 0],
+                  [0, 0, 0, 0],
+                ],
+              ],
+              // MINO_TYPE_T
+              [
+                [
+                  [0, 0, 0, 0],
+                  [0, 1, 0, 0],
+                  [1, 1, 1, 0],
+                  [0, 0, 0, 0],
+                ],
+                [
+                  [0, 0, 0, 0],
+                  [0, 1, 0, 0],
+                  [0, 1, 1, 0],
+                  [0, 1, 0, 0],
+                ],
+                [
+                  [0, 0, 0, 0],
+                  [0, 0, 0, 0],
+                  [1, 1, 1, 0],
+                  [0, 1, 0, 0],
+                ],
+                [
+                  [0, 0, 0, 0],
+                  [0, 1, 0, 0],
+                  [1, 1, 0, 0],
+                  [0, 1, 0, 0],
+                ],
+              ],
+            ];
+
+
+
+            var field;
+            function clearField() {
+              field = new Array(FIELD_HEIGHT);
+              for (i = 0; i < FIELD_HEIGHT; i++) {
+                field[i] = new Array(FIELD_WIDTH);
+                for (j = 0; j < FIELD_WIDTH; j++) {
+                  field[i][j] = 0;
+                }
+              }
+            }
+            clearField();
+            for (i = 0; i < FIELD_HEIGHT; i++) {
+              field[i][0] = 1;
+              field[i][FIELD_WIDTH - 1] = 1;
+            }
+            for (j = 0; j < FIELD_WIDTH; j++) {
+              field[FIELD_HEIGHT - 1][j] = 1;
+            }
+
+            var displayBuffer;
+            function clearBuffer() {
+              displayBuffer = new Array(FIELD_HEIGHT);
+              for (i = 0; i < FIELD_HEIGHT; i++) {
+                displayBuffer[i] = new Array(FIELD_WIDTH);
+                for (j = 0; j < FIELD_WIDTH; j++) {
+                  displayBuffer[i][j] = 0;
+                }
+              }
+            }
+            clearBuffer();
+
+            var div;
+
+            var minoX = 5, minoY = 0;
+            var minoType = 0; minoAngle = 0;
+            resetMino();
+
+            function isHit(_minoX, _minoY, _minoType, _minoAngle) {
+              for (i = 0; i < MINO_HEIGHT; i++) {
+                for (j = 0; j < MINO_WIDTH; j++) {
+                  if (minoShapes[_minoType][_minoAngle][i][j]
+                    && field[_minoY + i][_minoX + j])
+                    return true;
+                }
+              }
+              return false;
+            }
+
+            function resetMino() {
+              minoX = 5;
+              minoY = 0;
+              minoType = Math.floor(Math.random() * (minoTypes.MINO_TYPE_MAX));
+              minoAngle = Math.floor(Math.random() * (angleTypes.ANGLE_MAX));
+            }
+
+            function display() {
+              if (div) document.body.removeChild(div);
+              div = document.createElement("div");
+
+              for (i = 0; i < FIELD_HEIGHT; i++) {
+                for (j = 0; j < FIELD_WIDTH; j++) {
+                  displayBuffer[i][j] = field[i][j];
+                }
+              }
+
+              for (i = 0; i < MINO_HEIGHT; i++) {
+                for (j = 0; j < MINO_WIDTH; j++) {
+                  displayBuffer[minoY + i][minoX + j] |=
+                    minoShapes[minoType][minoAngle][i][j];
+                }
+              }
+              for (i = 0; i < FIELD_HEIGHT; i++) {
+                for (j = 0; j < FIELD_WIDTH; j++) {
+                  var span = document.createElement("span");
+                  span.innerText = displayBuffer[i][j] ? "■" : "　";
+                  span.setAttribute("style", "padding:0.2em;border:1px solid #ccc");
+                  div.appendChild(span);
+                }
+                var br = document.createElement("br");
+                div.appendChild(br);
+              }
+
+              document.body.appendChild(div);
+            }
+
+            setInterval(() => {
+              if (isHit(minoX, minoY + 1, minoType, minoAngle)) {
+                for (i = 0; i < MINO_HEIGHT; i++) {
+                  for (j = 0; j < MINO_WIDTH; j++) {
+                    field[minoY + i][minoX + j] |=
+                      minoShapes[minoType][minoAngle][i][j];
+                  }
+                }
+                resetMino();
+                for (i = 0; i < FIELD_HEIGHT - 1; i++) {
+                  var lineFill = true;
+                  for (j = 1; j < FIELD_WIDTH - 1; j++) {
+                    if (!field[i][j]) {
+                      lineFill = false;
+                    }
+                  }
+                  if (lineFill) {
+                    for (j = 1; j < FIELD_WIDTH - 1; j++) {
+                      field[i][j] = 0;
+                    }
+                    for (j = i; 0 < j; j--) {
+                      for (x = 0; x < FIELD_WIDTH; x++) {
+                        field[j][x] = field[j - 1][x];
+                      }
+                    }
+                  }
+                }
+              } else {
+                minoY++;
+              }
+              display();
+            }, 500);
+
+            document.onkeydown = function () {
+              switch (event.keyCode) {
+                // case 87://"w":
+                //   break;
+                case 83://"s":
+                case 40://"DOWN"
+                  if (!isHit(minoX, minoY + 1, minoType, minoAngle)) {
+                    minoY++;
+                  }
+                  break;
+                case 65://"a":
+                case 37://"LEFT"
+                  if (!isHit(minoX - 1, minoY, minoType, minoAngle)) {
+                    minoX--;
+                  }
+                  break;
+                case 68://"d"
+                case 39://"RIGHT"
+                  if (!isHit(minoX + 1, minoY, minoType, minoAngle)) {
+                    minoX++;
+                  }
+                  break;
+                case 32://"space"
+                  if (!isHit(minoX, minoY, minoType, (minoAngle + 1) % angleTypes.ANGLE_MAX)) {
+                    minoAngle = (minoAngle + 1) % angleTypes.ANGLE_MAX;
+                  }
+                  break;
+                default:
+                  break;
+              }
+              display();
+              // console.log(event.keyCode);
+            };
+
+          </script>
+        
+          <div>
+            <h2>JavaScriptでテトリス</h2>
+            <p>←：A or 左矢印キー、↓：S or 下矢印キー、→：D or 右矢印キー、 回転：SPACEキー、初期化：ブラウザリフレッシュ</p>
+          </div>
+        
+        </body>
+        
+        </html>
+    </textarea>
+  </div>
+
+</body>
+
+</html>

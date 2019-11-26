@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>JSじゃんけん</title>
+</head>
+
+<body>
+  <script>
+
+    var handType = {
+      HAND_GU: 0,
+      HAND_CHOKI: 1,
+      HAND_PA: 2,
+      HAND_MAX: 3
+    };
+    var handAA = [
+      "✊",
+      "✌️",
+      "✋"
+    ];
+
+    var rouletteWins = [
+      1, 2, 7, 4, 2, 16, 1, 2, 7, 4, 2, 50
+    ];
+    currentWin = -1;
+
+    var enemyHand = Math.floor(Math.random() * handType.HAND_MAX);
+
+    var medalCount = 0;
+    var totalMedal = 10;
+    var coin10Count = 0;
+    var coin100Count = 0;
+
+    var locked = false;
+
+    var resultType = {
+      RESULT_NONE: 0,
+      RESULT_WIN: 1,
+      RESULT_LOSE: 2,
+      RESULT_REPLAY: 3,
+      RESULT_MAX: 4
+    }
+
+    var result = resultType.RESULT_NONE;
+
+    var jackPot = false;
+
+    var levelType = {
+      EASY: 0,
+      NORMAL: 1,
+      HIGH: 2,
+      VERYHIGH: 3
+    }
+
+    var level = levelType.HIGH;
+
+    var div;
+
+    function resetMedal() {
+      medalCount = 0;
+      coin10Count = 0;
+      coin100Count = 0;
+    }
+
+    function playerMedalCount() {
+      return medalCount + coin10Count + coin100Count * 11;
+    }
+
+    function display() {
+      if (div) document.body.removeChild(div);
+
+      div = document.createElement("div");
+
+      div.setAttribute("style", "padding:0.2em;border:10px solid green;text-align:center;background-color:pink")
+
+      for (i = 0; i < rouletteWins.length; i++) {
+        var span = document.createElement("span");
+        if (i == currentWin) {
+          span.setAttribute("style", "display:inline-block;width:1.5em;padding:0.2em;margin:0.2em;font-size:1em;padding:1em;border:1px solid #ccc;background-color:yellow;");
+        } else {
+          span.setAttribute("style", "display:inline-block;width:1.5em;padding:0.2em;margin:0.2em;font-size:1em;padding:1em;border:1px solid #ccc;background-color:white;");
+        }
+        span.innerText = rouletteWins[i];
+        div.appendChild(span);
+        if (i % (rouletteWins.length / 2) == (rouletteWins.length / 2 - 1)) {
+          var br = document.createElement("br");
+          div.appendChild(br);
+        }
+      }
+
+      var span = document.createElement("span");
+      span.innerText = "JP";
+      if (jackPot) {
+        span.setAttribute("style", "display:inline-block;width:1.5em;padding:0.2em;margin:0.2em;font-size:1em;padding:1em;border:1px solid #ccc;background-color:yellow;");
+      } else {
+        span.setAttribute("style", "display:inline-block;width:1.5em;padding:0.2em;margin:0.2em;font-size:1em;padding:1em;border:1px solid #ccc;background-color:white;");
+      }
+      div.appendChild(span);
+
+      var br = document.createElement("br");
+      div.appendChild(br);
+
+      var span = document.createElement("span");
+      span.setAttribute("style", "display:inline-block;width:2em;padding:0.2em;margin:0.2em;font-size:1em;padding:1em;border:1px solid #ccc;background-color:white;");
+      span.innerText = "かち";
+      if (result == resultType.RESULT_WIN) {
+        span.setAttribute("style", "display:inline-block;width:2em;padding:0.2em;margin:0.2em;font-size:1em;padding:1em;border:1px solid #ccc;background-color:yellow;");
+      } else {
+        span.setAttribute("style", "display:inline-block;width:2em;padding:0.2em;margin:0.2em;font-size:1em;padding:1em;border:1px solid #ccc;background-color:white;");
+      }
+      div.appendChild(span);
+
+      var span = document.createElement("span");
+      span.setAttribute("style", "font-size:5em;padding:1em;");
+      span.innerText = handAA[enemyHand];
+      div.appendChild(span);
+
+      var span = document.createElement("span");
+      if (result == resultType.RESULT_WIN) {
+        span.setAttribute("style", "display:inline-block;width:2em;padding:0.2em;margin:0.2em;font-size:1em;padding:1em;border:1px solid #ccc;background-color:yellow;");
+      } else {
+        span.setAttribute("style", "display:inline-block;width:2em;padding:0.2em;margin:0.2em;font-size:1em;padding:1em;border:1px solid #ccc;background-color:white;");
+      }
+      span.innerText = "かち";
+      div.appendChild(span);
+
+      var br = document.createElement("br");
+      div.appendChild(br);
+
+      var span = document.createElement("span");
+      if (result == resultType.RESULT_LOSE) {
+        span.setAttribute("style", "display:inline-block;width:3em;padding:0.2em;margin:0.2em;font-size:1em;padding:1em;border:1px solid #ccc;background-color:yellow;");
+      } else {
+        span.setAttribute("style", "display:inline-block;width:3em;padding:0.2em;margin:0.2em;font-size:1em;padding:1em;border:1px solid #ccc;background-color:white;");
+      }
+      span.innerText = "まけ";
+      div.appendChild(span);
+
+      var span = document.createElement("span");
+      if (result == resultType.RESULT_REPLAY) {
+        span.setAttribute("style", "display:inline-block;width:3em;padding:0.2em;margin:0.2em;font-size:1em;padding:1em;border:1px solid #ccc;background-color:yellow;");
+      } else {
+        span.setAttribute("style", "display:inline-block;width:3em;padding:0.2em;margin:0.2em;font-size:1em;padding:1em;border:1px solid #ccc;background-color:white;");
+      }
+      span.innerText = "あいこ";
+      div.appendChild(span);
+
+
+      var br = document.createElement("br");
+      div.appendChild(br);
+
+      for (i = 0; i < handType.HAND_MAX; i++) {
+        var btn = document.createElement("button");
+        btn.setAttribute("style", "font-size:3em;margin:0.2em;");
+        btn.innerText = handAA[i];
+        btn.setAttribute("data-hand", i);
+        if (playerMedalCount() == 0) {
+          btn.disabled = true;
+        }
+        btn.onmousedown = function (event) {
+
+          var audio = document.createElement("audio");
+          if (result == resultType.RESULT_REPLAY) {
+            audio.src = "audio/audio003.mp3";
+          } else {
+            audio.src = "audio/audio001.mp3";
+          }
+          audio.play();
+          locked = true;
+          // console.log(event.target.dataset.hand);
+          count = playerMedalCount();
+          if (event.target.dataset.hand == enemyHand) {
+            result = resultType.RESULT_REPLAY;
+            //console.log("あいこ");
+            setTimeout(() => {
+              locked = false;
+              var audio = document.createElement("audio");
+              audio.src = "audio/audio002.mp3";
+              audio.play();
+              display();
+            }, 1000);
+          } else if (event.target.dataset.hand == (handType.HAND_MAX + (enemyHand - 1)) % handType.HAND_MAX) {
+            if (Math.floor(Math.random() * 8) < level * 2) {
+              //console.log("まけ2");
+              enemyHand = (handType.HAND_MAX + (enemyHand + 1)) % handType.HAND_MAX;
+              result = resultType.RESULT_LOSE;
+              resetMedal();
+              display();
+              setTimeout(() => {
+                var audio = document.createElement("audio");
+                audio.src = "audio/audio005.mp3";
+                audio.play();
+                locked = false;
+                result = resultType.RESULT_NONE;
+                display();
+              }, 1000);
+              return;
+            }
+            //console.log("かち");
+            result = resultType.RESULT_WIN;
+            var tmpCount = playerMedalCount();
+            resetMedal();
+            setTimeout(() => {
+              var audio = document.createElement("audio");
+              audio.src = "audio/audio004.mp3";
+              audio.play();
+              if (Math.floor(Math.random() * 8) < level * 2 &&
+                rouletteWins[currentWin] > 3
+              ) {
+                //console.log("コイン調整");
+                currentWin = (currentWin + 1) % rouletteWins.length;
+              }
+              result = resultType.RESULT_NONE;
+              totalMedal += rouletteWins[currentWin] * tmpCount;
+              if (rouletteWins[currentWin] == 50) {
+                jackPot = true;
+              } else {
+                jackPot = false;
+              }
+              display();
+            }, Math.floor(Math.random() * 3000));
+            locked = false;
+          } else if (event.target.dataset.hand == (handType.HAND_MAX + (enemyHand + 1)) % handType.HAND_MAX) {
+            //console.log("まけ");
+            result = resultType.RESULT_LOSE;
+            resetMedal();
+            setTimeout(() => {
+              var audio = document.createElement("audio");
+              audio.src = "audio/audio005.mp3";
+              audio.play();
+              result = resultType.RESULT_NONE;
+              display();
+            }, 1000);
+            locked = false;
+          }
+          display();
+        };
+        div.appendChild(btn);
+      }
+
+      var br = document.createElement("br");
+      div.appendChild(br);
+
+      var divMedal = document.createElement("div");
+      divMedal.setAttribute("style", "width:25%;margin:1em;display:inline-block;");
+      var btn = document.createElement("button");
+      btn.setAttribute("style", "cursor:pointer;margin:0.2em;font-size:1em;width:100%");
+      btn.innerText = "メダル投入";
+      if (totalMedal == 0 || medalCount > 0) {
+        btn.disabled = true;
+      }
+      btn.onmousedown = function () {
+        if (totalMedal > 0) {
+          var audio = document.createElement("audio");
+          audio.src = "audio/audio000.mp3";
+          audio.play();
+          totalMedal--;
+          medalCount++;
+          display();
+        }
+      };
+      divMedal.appendChild(btn);
+
+      var btn = document.createElement("button");
+      btn.setAttribute("style", "cursor:pointer;margin:0.2em;font-size:1em;width:100%");
+      if (medalCount == 0) {
+        btn.disabled = true;
+      }
+      btn.onmousedown = function () {
+        totalMedal += medalCount;
+        medalCount = 0;
+        display();
+      }
+      btn.innerText = "メダル返却";
+      divMedal.appendChild(btn);
+
+      div.appendChild(divMedal);
+
+      var divMedal10 = document.createElement("div");
+      divMedal10.setAttribute("style", "width:25%;margin:1em;display:inline-block;");
+      var btn = document.createElement("button");
+      btn.setAttribute("style", "cursor:pointer;margin:0.2em;font-size:1em;width:100%");
+      btn.innerText = "0.1ETH(1枚)";
+      if (medalCount > 0 || totalMedal > 10) {
+        btn.disabled = true;
+      }
+      btn.onmousedown = function () {
+        // coin10Count++;
+        totalMedal++;
+        display();
+      }
+      divMedal10.appendChild(btn);
+
+      var btn = document.createElement("button");
+      btn.setAttribute("style", "cursor:pointer;margin:0.2em;font-size:1em;width:100%");
+      btn.innerText = "返却";
+      if (coin10Count == 0) {
+        btn.disabled = true;
+      }
+      btn.onmousedown = function () {
+        totalMedal += coin10Count;
+        coin10Count = 0;
+        display();
+      }
+      divMedal10.appendChild(btn);
+
+      div.appendChild(divMedal10);
+
+
+      var divMedal100 = document.createElement("div");
+      divMedal100.setAttribute("style", "width:25%;margin:1em;display:inline-block;");
+      var btn = document.createElement("button");
+      btn.setAttribute("style", "cursor:pointer;margin:0.2em;font-size:1em;width:100%");
+      btn.innerText = "1ETH(11枚)";
+      if (medalCount > 0 || totalMedal > 10) {
+        btn.disabled = true;
+      }
+      btn.onmousedown = function () {
+        // coin100Count++;
+        totalMedal += 11;
+        display();
+      }
+      divMedal100.appendChild(btn);
+
+      var btn = document.createElement("button");
+      btn.setAttribute("style", "cursor:pointer;margin:0.2em;font-size:1em;width:100%");
+      btn.innerText = "返却";
+      if (coin100Count == 0) {
+        btn.disabled = true;
+      }
+      btn.onmousedown = function () {
+        totalMedal += coin100Count * 11;
+        coin100Count = 0;
+        display();
+      }
+      divMedal100.appendChild(btn);
+
+      div.appendChild(divMedal100);
+
+      var br = document.createElement("br");
+      div.appendChild(br);
+
+      var span = document.createElement("span");
+      span.setAttribute("style", "font-size:3em;background-color:white;width:100%;display:block;")
+      span.innerText = playerMedalCount();
+      div.appendChild(span);
+
+
+      var br = document.createElement("br");
+      div.appendChild(br);
+      var span = document.createElement("span");
+      span.setAttribute("style", "font-size:3em;background-color:cyan;width:100%;display:block;")
+      span.innerText = totalMedal;
+      div.appendChild(span);
+
+      document.body.appendChild(div);
+      // console.log("1")
+
+    }
+
+    display();
+    setInterval(() => {
+      if (playerMedalCount() != 0 && !locked) {
+        enemyHand = Math.floor(Math.random() * handType.HAND_MAX);
+
+        display();
+      }
+      if (result == resultType.RESULT_WIN) {
+        currentWin = (currentWin + 1) % rouletteWins.length;
+
+        var audio = document.createElement("audio");
+        audio.src = "audio/audio006.mp3";
+        audio.play();
+        display();
+      } else {
+        currentWin = -1;
+      }
+    }, 100);
+
+  </script>
+</body>
+
+</html>
